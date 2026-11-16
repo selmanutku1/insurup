@@ -1,18 +1,54 @@
-export type PackageTier = 'TEMEL' | 'PRO' | 'DİJİTAL';
+export type PackageTier = 'TEMEL' | 'PRO';
 
 export type ProductTierChoice = 'Lite' | 'Pro';
 
+export type ClientEntityType = 'Acente' | 'Broker' | 'Şirket';
+
 export type ModuleId = 'CRM' | 'WEB_SATIS' | 'INSURCHAT' | 'INSURGATEWAY';
 
-export type ProposalStatus = 'Taslak' | 'Gönderildi' | 'Onaylandı' | 'Revize';
+export type ProposalStatus =
+  | 'Taslak'
+  | 'Gönderildi'
+  | 'Değerlendirmede'
+  | 'Revize'
+  | 'Onaylandı'
+  | 'Reddedildi';
+
+export type ProposalMainStage =
+  | 'Aranacak'
+  | 'Değerlendirme'
+  | 'Teklif ve Sözleşme'
+  | 'Sonuçlanma';
+
+export type ProposalSubStage =
+  | 'Yeni Aranacak'
+  | 'Planlı / Tekrar Aranacak'
+  | 'Ulaşılamadı / Tekrar Aranacak'
+  | 'Değerlendiriyor'
+  | 'Dönüş Bekleniyor'
+  | 'Free Model Kullanıyor'
+  | 'Web Servis İzin Alma Sürecinde'
+  | 'Analiz Gönderildi'
+  | 'Demo Link Bekliyor'
+  | 'Sunum Toplantısı Planlanacak'
+  | 'Sunum Toplantısı Yapılacak'
+  | 'SaaS Demosuna Ertele'
+  | 'Sunum Yapıldı - Değerlendiriyor'
+  | 'Teklif Gönderilecek'
+  | 'Teklife Dönüş Bekleniyor'
+  | 'Sözleşme Aşamasında'
+  | 'Olumlu'
+  | 'Sözleşmeye Döndü'
+  | 'Olumsuz'
+  | 'Red - Sonra Dönüş'
+  | 'Tekrarlanan Kayıt';
+
+export type ProposalPriority = 'Yüksek' | 'Orta' | 'Düşük';
 
 export type WorkspaceTab =
   | 'teklifler'
-  | 'fiyatlarimiz'
-  | 'kapsam'
-  | 'paketler'
+  | 'ozet'
   | 'fiyatlandirma'
-  | 'referanslar'
   | 'onizleme';
 
 export interface EcosystemModule {
@@ -61,7 +97,6 @@ export interface FeatureMatrixRow {
   category: 'Teklif & Satış' | 'Poliçe & Operasyon' | 'CRM & Otomasyon' | 'Entegrasyon & SLA';
   temel: boolean | string;
   pro: boolean | string;
-  dijital: boolean | string;
 }
 
 export interface CustomLineItem {
@@ -86,6 +121,7 @@ export interface PricingConfig {
   insurerUnitSetupFee: number;
   insurerUnitMonthlyFee: number;
   extraModules: CustomLineItem[];
+  hasCampaign?: boolean;
   discountType: 'percent' | 'fixed';
   discountValue: number;
   campaignCondition: string;
@@ -99,11 +135,39 @@ export interface ProductTierSelection {
   INSURCHAT: ProductTierChoice;
 }
 
+export interface ProposalRevision {
+  id: string;
+  versionNumber: number;
+  archivedAt: string; // ISO timestamp
+  statusAtArchive: ProposalStatus;
+  revisionNote?: string;
+  snapshot: Omit<Proposal, 'history'>;
+}
+
+export interface ProposalMeetingNote {
+  id: string;
+  authorName: string;
+  createdAt: string; // ISO timestamp
+  note: string;
+  type: 'meeting' | 'status_change';
+  previousStatus?: ProposalStatus;
+  nextStatus?: ProposalStatus;
+}
+
 export interface Proposal {
   id: string;
   code: string;
   status: ProposalStatus;
+  mainStage?: ProposalMainStage;
+  subStage?: ProposalSubStage;
+  priority?: ProposalPriority;
+  revisionNumber?: number;
+  history?: ProposalRevision[];
+  meetingNotes?: ProposalMeetingNote[];
+  clientType?: ClientEntityType;
   clientName: string;
+  city?: string;
+  district?: string;
   authorizedPerson: string;
   clientEmail: string;
   clientPhone: string;
@@ -122,7 +186,15 @@ export interface Proposal {
   salesRepEmail: string;
   includePartnerPages: boolean;
   notes: string;
+  customPricingNotes?: string[];
   updatedAt: string;
+}
+
+export interface SalesRepProfile {
+  name: string;
+  phone: string;
+  email: string;
+  role?: 'Sistem Yöneticisi' | 'Satış Temsilcisi';
 }
 
 export interface PartnerItem {

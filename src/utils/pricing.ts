@@ -16,7 +16,9 @@ export interface CalculatedPricing {
   extraModulesMonthly: number;
   totalSetup: number;
   subtotalMonthly: number;
+  hasCampaign: boolean;
   discountAmountMonthly: number;
+  effectiveDiscountPercent: number;
   finalMonthly: number;
   transactionOverageTiers: number;
   transactionOverageFee: number;
@@ -59,12 +61,26 @@ export function calculateProposalPricing(proposal: Proposal): CalculatedPricing 
     insurersMonthly +
     extraModulesMonthly;
 
+  const hasCampaign =
+    typeof pricing.hasCampaign === 'boolean'
+      ? pricing.hasCampaign
+      : pricing.discountValue > 0;
+
   let discountAmountMonthly = 0;
-  if (pricing.discountType === 'percent') {
-    const pct = Math.min(100, Math.max(0, pricing.discountValue));
-    discountAmountMonthly = Math.round((subtotalMonthly * pct) / 100);
-  } else {
-    discountAmountMonthly = Math.min(subtotalMonthly, Math.max(0, pricing.discountValue));
+  let effectiveDiscountPercent = 0;
+
+  if (hasCampaign) {
+    if (pricing.discountType === 'percent') {
+      const pct = Math.min(100, Math.max(0, pricing.discountValue));
+      discountAmountMonthly = Math.round((subtotalMonthly * pct) / 100);
+      effectiveDiscountPercent = Math.round(pct * 10) / 10;
+    } else {
+      discountAmountMonthly = Math.min(subtotalMonthly, Math.max(0, pricing.discountValue));
+      effectiveDiscountPercent =
+        subtotalMonthly > 0
+          ? Math.round((discountAmountMonthly / subtotalMonthly) * 1000) / 10
+          : 0;
+    }
   }
 
   const finalMonthly = Math.max(0, subtotalMonthly - discountAmountMonthly);
@@ -92,13 +108,23 @@ export function calculateProposalPricing(proposal: Proposal): CalculatedPricing 
     extraModulesMonthly,
     totalSetup,
     subtotalMonthly,
+    hasCampaign,
     discountAmountMonthly,
+    effectiveDiscountPercent,
     finalMonthly,
     transactionOverageTiers,
     transactionOverageFee,
     effectiveMonthlyWithOverage,
     annualTotalWithSetup,
   };
+}
+
+export function formatDiscountPercentTR(percent: number): string {
+  const formatted = new Intl.NumberFormat('tr-TR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  }).format(percent);
+  return `%${formatted}`;
 }
 
 export function formatTRY(amount: number): string {
@@ -127,14 +153,13 @@ export function getEffectiveFeatureValue(
   overrides: Record<string, boolean>
 ): boolean | string {
   if (Object.prototype.hasOwnProperty.call(overrides, row.id)) {
-    if (typeof row.dijital === 'string') {
+    if (typeof row.pro === 'string') {
       return overrides[row.id] ? 'Özel' : 'Standart';
     }
     return overrides[row.id];
   }
   if (tier === 'TEMEL') return row.temel;
-  if (tier === 'PRO') return row.pro;
-  return row.dijital;
+  return row.pro;
 }
 
 export function countEnabledFeatures(

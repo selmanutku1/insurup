@@ -23,11 +23,23 @@ function sanitizeFileName(raw: string): string {
 
 export async function generateProposalPdfFile(
   containerElement: HTMLElement,
-  proposal: Proposal
+  proposal: Proposal,
+  versionNumber?: number
 ): Promise<string> {
   if (document.fonts && document.fonts.ready) {
     await document.fonts.ready;
   }
+
+  const images = Array.from(containerElement.querySelectorAll('img'));
+  await Promise.all(
+    images.map((img) => {
+      if (img.complete) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        img.addEventListener('load', () => resolve(), { once: true });
+        img.addEventListener('error', () => resolve(), { once: true });
+      });
+    })
+  );
 
   const pageElements = Array.from(
     containerElement.querySelectorAll<HTMLElement>('[data-pdf-page]')
@@ -67,11 +79,39 @@ export async function generateProposalPdfFile(
     }
 
     pdf.addImage(imgData, 'JPEG', 0, 0, pageWidthMm, pageHeightMm, undefined, 'FAST');
+
+    // Add clickable PDF hyperlink annotations for all <a href="..."> elements on this page
+    const pageRect = pageEl.getBoundingClientRect();
+    const pageWidthPx = pageRect.width || 794;
+    const pageHeightPx = pageRect.height || 1123;
+    const anchorElements = Array.from(
+      pageEl.querySelectorAll<HTMLAnchorElement>('a[href]')
+    );
+
+    for (const anchorEl of anchorElements) {
+      const rawHref = anchorEl.getAttribute('href')?.trim();
+      if (!rawHref) continue;
+
+      const rect = anchorEl.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) continue;
+
+      const xMm = ((rect.left - pageRect.left) / pageWidthPx) * pageWidthMm;
+      const yMm = ((rect.top - pageRect.top) / pageHeightPx) * pageHeightMm;
+      const wMm = (rect.width / pageWidthPx) * pageWidthMm;
+      const hMm = (rect.height / pageHeightPx) * pageHeightMm;
+
+      pdf.link(xMm, yMm, wMm, hMm, { url: rawHref });
+    }
   }
 
   const clientSlug = sanitizeFileName(proposal.clientName || 'Musteri');
   const codeSlug = sanitizeFileName(proposal.code || 'Teklif');
-  const fileName = `InsurUp_Teklif_${clientSlug}_${codeSlug}.pdf`;
+  const resolvedVersion = versionNumber ?? proposal.revisionNumber;
+  const versionSuffix =
+    resolvedVersion && (versionNumber !== undefined || resolvedVersion > 1)
+      ? `_v${resolvedVersion}`
+      : '';
+  const fileName = `InsurUp_Teklif_${clientSlug}_${codeSlug}${versionSuffix}.pdf`;
 
   pdf.save(fileName);
   return fileName;

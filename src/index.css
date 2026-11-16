@@ -21,6 +21,22 @@
   font-variant-numeric: tabular-nums;
 }
 
+.proposal-pdf-root {
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "Inter", system-ui, -apple-system, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+.proposal-pdf-root *,
+.proposal-pdf-root h1,
+.proposal-pdf-root h2,
+.proposal-pdf-root h3,
+.proposal-pdf-root h4,
+.proposal-pdf-root .font-display {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
 @media print {
   @page {
     size: A4 portrait;

@@ -3,58 +3,58 @@ import React from 'react';
 interface InsurUpLogoProps {
   theme?: 'light' | 'dark';
   size?: 'sm' | 'md' | 'lg';
+  iconOnly?: boolean;
+  href?: string | null;
 }
 
 export const InsurUpLogo: React.FC<InsurUpLogoProps> = ({
   theme = 'dark',
   size = 'md',
+  iconOnly = false,
+  href = iconOnly ? null : 'https://www.insurup.com',
 }) => {
-  const iconDimensions =
-    size === 'sm' ? 'w-6 h-6' : size === 'lg' ? 'w-9 h-9' : 'w-7 h-7';
-  const textClass =
-    size === 'sm'
-      ? 'text-lg'
+  const heightClass = iconOnly
+    ? size === 'sm'
+      ? 'h-6 w-6'
       : size === 'lg'
-        ? 'text-2xl'
-        : 'text-xl';
+        ? 'h-9 w-9'
+        : 'h-7 w-7'
+    : size === 'sm'
+      ? 'h-5'
+      : size === 'lg'
+        ? 'h-8'
+        : 'h-7';
+
+  const logoSrc = iconOnly
+    ? '/assets/insurup-icon.png'
+    : theme === 'light'
+      ? '/assets/insurup-light.png'
+      : '/assets/aistudio/insurup_680ecac2.png';
+
+  const imgElement = (
+    <img
+      src={logoSrc}
+      alt="InsurUp"
+      className={`${heightClass} ${iconOnly ? '' : 'w-auto'} object-contain select-none shrink-0`}
+    />
+  );
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center select-none whitespace-nowrap shrink-0"
+      >
+        {imgElement}
+      </a>
+    );
+  }
 
   return (
-    <div className="inline-flex items-center gap-2.5 select-none whitespace-nowrap shrink-0">
-      <svg
-        viewBox="0 0 36 36"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className={iconDimensions}
-        aria-hidden="true"
-      >
-        {/* Top-left blue block */}
-        <path
-          d="M11 3H19L16 14H8L11 3Z"
-          fill="#2563EB"
-        />
-        {/* Bottom-right blue block */}
-        <path
-          d="M20 22H28L25 33H17L20 22Z"
-          fill="#2563EB"
-        />
-        {/* Left-bottom light cyan block */}
-        <path
-          d="M3 19L14 16V24L3 27V19Z"
-          fill="#60A5FA"
-        />
-        {/* Right-top light cyan block */}
-        <path
-          d="M22 12L33 9V17L22 20V12Z"
-          fill="#60A5FA"
-        />
-      </svg>
-      <span
-        className={`font-display font-bold tracking-tight ${textClass} ${
-          theme === 'light' ? 'text-white' : 'text-slate-900'
-        }`}
-      >
-        InsurUp
-      </span>
+    <div className="inline-flex items-center select-none whitespace-nowrap shrink-0">
+      {imgElement}
     </div>
   );
 };
