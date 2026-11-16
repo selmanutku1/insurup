@@ -1,11 +1,14 @@
 export type PackageTier = 'TEMEL' | 'PRO' | 'DİJİTAL';
 
+export type ProductTierChoice = 'Lite' | 'Pro';
+
 export type ModuleId = 'CRM' | 'WEB_SATIS' | 'INSURCHAT' | 'INSURGATEWAY';
 
 export type ProposalStatus = 'Taslak' | 'Gönderildi' | 'Onaylandı' | 'Revize';
 
 export type WorkspaceTab =
   | 'teklifler'
+  | 'fiyatlarimiz'
   | 'kapsam'
   | 'paketler'
   | 'fiyatlandirma'
@@ -21,6 +24,35 @@ export interface EcosystemModule {
   description: string;
   defaultSetupFee: number;
   defaultMonthlyFee: number;
+}
+
+export interface CatalogTierDetail {
+  tier: ProductTierChoice;
+  audience: string;
+  monthlyPrice: number;
+  priceSuffix?: string;
+  pricePrefix?: string;
+  bullets: string[];
+}
+
+export interface CatalogProduct {
+  id: 'CRM' | 'WEB_SATIS' | 'INSURCHAT';
+  title: string;
+  subtitle: string;
+  accentColor: 'blue' | 'sky' | 'indigo';
+  lite: CatalogTierDetail;
+  pro: CatalogTierDetail;
+  benefits: string[];
+}
+
+export interface CatalogExtraItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  priceLabel: string;
+  numericMonthlyFee: number | null;
+  type: 'unit_user' | 'unit_insurer' | 'addon_toggle' | 'addon_qty' | 'info';
+  defaultSetupFee?: number;
 }
 
 export interface FeatureMatrixRow {
@@ -45,6 +77,8 @@ export interface PricingConfig {
   crmMonthlyFee: number;
   webSatisSetupFee: number;
   webSatisMonthlyFee: number;
+  insurChatSetupFee: number;
+  insurChatMonthlyFee: number;
   userCount: number;
   userUnitSetupFee: number;
   userUnitMonthlyFee: number;
@@ -59,6 +93,12 @@ export interface PricingConfig {
   estimatedMonthlyTransactions: number;
 }
 
+export interface ProductTierSelection {
+  CRM: ProductTierChoice;
+  WEB_SATIS: ProductTierChoice;
+  INSURCHAT: ProductTierChoice;
+}
+
 export interface Proposal {
   id: string;
   code: string;
@@ -70,6 +110,7 @@ export interface Proposal {
   proposalDate: string; // YYYY-MM-DD
   selectedModules: ModuleId[];
   selectedPackage: PackageTier;
+  productTiers?: ProductTierSelection;
   /** Feature IDs explicitly enabled/overridden for this client beyond or within the base package */
   customFeatureOverrides: Record<string, boolean>;
   /** Specific insurer IDs checked from the directory; syncs with pricing.insurerCount if user chooses */

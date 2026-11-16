@@ -6,6 +6,8 @@ export interface CalculatedPricing {
   crmMonthly: number;
   webSatisSetup: number;
   webSatisMonthly: number;
+  insurChatSetup: number;
+  insurChatMonthly: number;
   usersSetup: number;
   usersMonthly: number;
   insurersSetup: number;
@@ -24,13 +26,18 @@ export interface CalculatedPricing {
 
 export function calculateProposalPricing(proposal: Proposal): CalculatedPricing {
   const { pricing, selectedModules } = proposal;
+  const hasCrm = selectedModules.includes('CRM');
   const hasWebSatis = selectedModules.includes('WEB_SATIS');
+  const hasInsurChat = selectedModules.includes('INSURCHAT');
 
-  const crmSetup = Math.max(0, pricing.crmSetupFee);
-  const crmMonthly = Math.max(0, pricing.crmMonthlyFee);
+  const crmSetup = hasCrm ? Math.max(0, pricing.crmSetupFee) : 0;
+  const crmMonthly = hasCrm ? Math.max(0, pricing.crmMonthlyFee) : 0;
 
   const webSatisSetup = hasWebSatis ? Math.max(0, pricing.webSatisSetupFee) : 0;
   const webSatisMonthly = hasWebSatis ? Math.max(0, pricing.webSatisMonthlyFee) : 0;
+
+  const insurChatSetup = hasInsurChat ? Math.max(0, pricing.insurChatSetupFee || 0) : 0;
+  const insurChatMonthly = hasInsurChat ? Math.max(0, pricing.insurChatMonthlyFee ?? 4900) : 0;
 
   const usersSetup = Math.max(0, pricing.userCount) * Math.max(0, pricing.userUnitSetupFee);
   const usersMonthly = Math.max(0, pricing.userCount) * Math.max(0, pricing.userUnitMonthlyFee);
@@ -42,9 +49,15 @@ export function calculateProposalPricing(proposal: Proposal): CalculatedPricing 
   const extraModulesSetup = enabledExtras.reduce((sum, m) => sum + Math.max(0, m.setupFee), 0);
   const extraModulesMonthly = enabledExtras.reduce((sum, m) => sum + Math.max(0, m.monthlyFee), 0);
 
-  const totalSetup = crmSetup + webSatisSetup + usersSetup + insurersSetup + extraModulesSetup;
+  const totalSetup =
+    crmSetup + webSatisSetup + insurChatSetup + usersSetup + insurersSetup + extraModulesSetup;
   const subtotalMonthly =
-    crmMonthly + webSatisMonthly + usersMonthly + insurersMonthly + extraModulesMonthly;
+    crmMonthly +
+    webSatisMonthly +
+    insurChatMonthly +
+    usersMonthly +
+    insurersMonthly +
+    extraModulesMonthly;
 
   let discountAmountMonthly = 0;
   if (pricing.discountType === 'percent') {
@@ -56,7 +69,7 @@ export function calculateProposalPricing(proposal: Proposal): CalculatedPricing 
 
   const finalMonthly = Math.max(0, subtotalMonthly - discountAmountMonthly);
 
-  // Page 4 rule: 150.000 işlem dahil, her artan 150.000 işlem için +25.000 TL
+  // 150.000 işlem dahil, her artan 150.000 işlem için +25.000 TL
   const excessTransactions = Math.max(0, pricing.estimatedMonthlyTransactions - 150000);
   const transactionOverageTiers = excessTransactions > 0 ? Math.ceil(excessTransactions / 150000) : 0;
   const transactionOverageFee = transactionOverageTiers * 25000;
@@ -69,6 +82,8 @@ export function calculateProposalPricing(proposal: Proposal): CalculatedPricing 
     crmMonthly,
     webSatisSetup,
     webSatisMonthly,
+    insurChatSetup,
+    insurChatMonthly,
     usersSetup,
     usersMonthly,
     insurersSetup,
@@ -87,10 +102,12 @@ export function calculateProposalPricing(proposal: Proposal): CalculatedPricing 
 }
 
 export function formatTRY(amount: number): string {
-  return new Intl.NumberFormat('tr-TR', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount) + ' TL';
+  return (
+    new Intl.NumberFormat('tr-TR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount) + ' TL'
+  );
 }
 
 export function formatNumberTR(num: number): string {

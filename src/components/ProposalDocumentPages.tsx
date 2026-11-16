@@ -43,7 +43,14 @@ export const ProposalDocumentPages: React.FC<ProposalDocumentPagesProps> = ({
   fixedA4ForExport = false,
 }) => {
   const calc = calculateProposalPricing(proposal);
+  const hasCrm = proposal.selectedModules.includes('CRM');
   const hasWebSatis = proposal.selectedModules.includes('WEB_SATIS');
+  const hasInsurChat = proposal.selectedModules.includes('INSURCHAT');
+  const productTiers = proposal.productTiers || {
+    CRM: proposal.selectedPackage === 'TEMEL' ? 'Lite' : 'Pro',
+    WEB_SATIS: 'Lite',
+    INSURCHAT: 'Lite',
+  };
   const scopeText = proposal.selectedModules
     .map((id) => ECOSYSTEM_MODULES.find((m) => m.id === id)?.shortScopeLabel || id)
     .join(' - ');
@@ -414,18 +421,18 @@ export const ProposalDocumentPages: React.FC<ProposalDocumentPagesProps> = ({
                 <tbody className="divide-y divide-slate-200">
                   <tr>
                     <td className="py-2.5 px-4 font-semibold text-slate-900">
-                      InsurUp CRM – {proposal.selectedPackage} Paket
+                      InsurUp CRM – {productTiers.CRM}
                     </td>
                     <td className="py-2.5 px-4 text-right font-mono tabular-nums">
-                      {formatTRY(calc.crmSetup)}
+                      {hasCrm ? formatTRY(calc.crmSetup) : '—'}
                     </td>
                     <td className="py-2.5 px-4 text-right font-mono tabular-nums">
-                      {formatTRY(calc.crmMonthly)}
+                      {hasCrm ? formatTRY(calc.crmMonthly) : '—'}
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 px-4 font-semibold text-slate-900">
-                      Web Satış Platformu / API
+                      Web Satış Platformu – {productTiers.WEB_SATIS}
                     </td>
                     <td className="py-2.5 px-4 text-right font-mono tabular-nums">
                       {hasWebSatis ? formatTRY(calc.webSatisSetup) : '—'}
@@ -434,6 +441,19 @@ export const ProposalDocumentPages: React.FC<ProposalDocumentPagesProps> = ({
                       {hasWebSatis ? formatTRY(calc.webSatisMonthly) : '—'}
                     </td>
                   </tr>
+                  {hasInsurChat && (
+                    <tr>
+                      <td className="py-2.5 px-4 font-semibold text-slate-900">
+                        InsurChat Asistan – {productTiers.INSURCHAT}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-mono tabular-nums">
+                        {formatTRY(calc.insurChatSetup)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-mono tabular-nums">
+                        {formatTRY(calc.insurChatMonthly)}
+                      </td>
+                    </tr>
+                  )}
                   <tr>
                     <td className="py-2.5 px-4 font-semibold text-slate-900">
                       {proposal.pricing.userCount} kullanıcı

@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { ArrowRight, Plus, Trash2 } from 'lucide-react';
 import { PRICING_NOTES } from '../data/insurupData';
-import { CustomLineItem, PricingConfig, Proposal } from '../types/proposal';
+import {
+  CustomLineItem,
+  PricingConfig,
+  ProductTierChoice,
+  Proposal,
+} from '../types/proposal';
 import {
   calculateProposalPricing,
   formatDateTR,
@@ -22,10 +27,18 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
 }) => {
   const [newExtraName, setNewExtraName] = useState('');
   const [newExtraSetup, setNewExtraSetup] = useState('0');
-  const [newExtraMonthly, setNewExtraMonthly] = useState('2500');
+  const [newExtraMonthly, setNewExtraMonthly] = useState('4900');
 
   const calc = calculateProposalPricing(proposal);
+  const hasCrm = proposal.selectedModules.includes('CRM');
   const hasWebSatis = proposal.selectedModules.includes('WEB_SATIS');
+  const hasInsurChat = proposal.selectedModules.includes('INSURCHAT');
+
+  const productTiers = proposal.productTiers || {
+    CRM: proposal.selectedPackage === 'TEMEL' ? 'Lite' : 'Pro',
+    WEB_SATIS: 'Lite',
+    INSURCHAT: 'Lite',
+  };
 
   const updatePricing = <K extends keyof PricingConfig>(
     field: K,
@@ -36,6 +49,39 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
       pricing: {
         ...prev.pricing,
         [field]: value,
+      },
+      updatedAt: new Date().toISOString(),
+    }));
+  };
+
+  const setProductTier = (
+    product: 'CRM' | 'WEB_SATIS' | 'INSURCHAT',
+    tier: ProductTierChoice
+  ) => {
+    const priceMap = {
+      CRM: { Lite: 4999, Pro: 29000 },
+      WEB_SATIS: { Lite: 14900, Pro: 89000 },
+      INSURCHAT: { Lite: 4900, Pro: 59000 },
+    };
+    const nextFee = priceMap[product][tier];
+
+    onUpdateProposal((prev) => ({
+      ...prev,
+      productTiers: {
+        ...(prev.productTiers || productTiers),
+        [product]: tier,
+      },
+      selectedPackage:
+        product === 'CRM'
+          ? tier === 'Lite'
+            ? 'TEMEL'
+            : 'PRO'
+          : prev.selectedPackage,
+      pricing: {
+        ...prev.pricing,
+        ...(product === 'CRM' ? { crmMonthlyFee: nextFee } : {}),
+        ...(product === 'WEB_SATIS' ? { webSatisMonthlyFee: nextFee } : {}),
+        ...(product === 'INSURCHAT' ? { insurChatMonthlyFee: nextFee } : {}),
       },
       updatedAt: new Date().toISOString(),
     }));
@@ -76,7 +122,7 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
     }));
     setNewExtraName('');
     setNewExtraSetup('0');
-    setNewExtraMonthly('2500');
+    setNewExtraMonthly('4900');
   };
 
   const removeExtraModule = (id: string) => {
@@ -99,7 +145,7 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
             Fiyatlandırma & Ticari Koşullar
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Kapsam, kullanıcı ve sigorta şirketi entegrasyon adetleri doğrultusunda teklif bedellerini yapılandırın.
+            CRM, Web Satış ve InsurChat Lite/Pro katmanları ile kullanıcı, sigorta şirketi ve ekstra modül kalemlerini yapılandırın.
           </p>
         </div>
         <button
@@ -115,7 +161,7 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
       {/* Main Split: Line Items Configurator + Summary */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         <div className="xl:col-span-8 space-y-6">
-          {/* Core Pricing Table (Page 4 Structure) */}
+          {/* Core Pricing Table */}
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
               <div>
@@ -123,11 +169,11 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
                   Hizmet & Lisans Kalemleri (Sayfa 04)
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  TeknoPark ürünü olduğundan tüm fiyatlar KDV muaftır.
+                  3065 sayılı KDV Kanunu Geçici 20/1. madde uyarınca Teknopark KDV muafiyeti uygulanır.
                 </p>
               </div>
               <span className="text-xs font-medium text-slate-600">
-                {proposal.selectedPackage} Paket
+                {proposal.selectedPackage} Kapsam
               </span>
             </div>
 
@@ -136,30 +182,52 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
                 <thead>
                   <tr className="bg-blue-600 text-white text-xs font-semibold">
                     <th className="py-3 px-4">Hizmet / Lisans</th>
-                    <th className="py-3 px-4 w-32 text-center">Adet / Birim</th>
-                    <th className="py-3 px-4 w-40 text-right">Kurulum (TL)</th>
-                    <th className="py-3 px-4 w-40 text-right">Aylık (TL)</th>
+                    <th className="py-3 px-4 w-36 text-center">Katman / Adet</th>
+                    <th className="py-3 px-4 w-36 text-right">Kurulum (TL)</th>
+                    <th className="py-3 px-4 w-36 text-right">Aylık (TL)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 text-sm">
                   {/* Row 1: InsurUp CRM */}
-                  <tr>
-                    <td className="py-3.5 px-4 font-medium text-slate-900">
-                      InsurUp CRM – {proposal.selectedPackage} Paket
+                  <tr className={!hasCrm ? 'bg-slate-50/70 opacity-60' : ''}>
+                    <td className="py-3.5 px-4">
+                      <div className="font-medium text-slate-900">
+                        InsurUp CRM ({productTiers.CRM})
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">
+                        Lite: 4.999 TL · Pro: 29.000 TL
+                      </div>
                     </td>
-                    <td className="py-3.5 px-4 text-center text-xs text-slate-500">
-                      Ana Lisans
+                    <td className="py-3.5 px-4">
+                      <div className="inline-flex items-center p-0.5 bg-slate-100 rounded-md mx-auto">
+                        {(['Lite', 'Pro'] as ProductTierChoice[]).map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            disabled={!hasCrm}
+                            onClick={() => setProductTier('CRM', t)}
+                            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
+                              productTiers.CRM === t
+                                ? 'bg-white text-slate-900 shadow-xs'
+                                : 'text-slate-600'
+                            }`}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
                     </td>
                     <td className="py-3.5 px-4">
                       <input
                         type="number"
                         min={0}
                         step={500}
+                        disabled={!hasCrm}
                         value={proposal.pricing.crmSetupFee}
                         onChange={(e) =>
                           updatePricing('crmSetupFee', Math.max(0, Number(e.target.value)))
                         }
-                        className="w-full text-right font-mono text-sm px-2.5 py-1.5 border border-slate-200 rounded-md focus:outline-none focus:border-blue-600 tabular-nums"
+                        className="w-full text-right font-mono text-sm px-2.5 py-1.5 border border-slate-200 rounded-md focus:outline-none focus:border-blue-600 disabled:bg-slate-100 tabular-nums"
                       />
                     </td>
                     <td className="py-3.5 px-4">
@@ -167,29 +235,46 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
                         type="number"
                         min={0}
                         step={500}
+                        disabled={!hasCrm}
                         value={proposal.pricing.crmMonthlyFee}
                         onChange={(e) =>
                           updatePricing('crmMonthlyFee', Math.max(0, Number(e.target.value)))
                         }
-                        className="w-full text-right font-mono text-sm px-2.5 py-1.5 border border-slate-200 rounded-md focus:outline-none focus:border-blue-600 tabular-nums"
+                        className="w-full text-right font-mono text-sm px-2.5 py-1.5 border border-slate-200 rounded-md focus:outline-none focus:border-blue-600 disabled:bg-slate-100 tabular-nums"
                       />
                     </td>
                   </tr>
 
-                  {/* Row 2: Web Satış Platformu / API */}
+                  {/* Row 2: Web Satış Platformu */}
                   <tr className={!hasWebSatis ? 'bg-slate-50/70 opacity-60' : ''}>
                     <td className="py-3.5 px-4">
                       <div className="font-medium text-slate-900">
-                        Web Satış Platformu / API
+                        Web Satış Platformu ({productTiers.WEB_SATIS})
                       </div>
-                      {!hasWebSatis && (
-                        <div className="text-[11px] text-slate-500 mt-0.5">
-                          Kapsam sekmesinde Web Satış seçili değil (0 TL hesaplanır)
-                        </div>
-                      )}
+                      <div className="text-[11px] text-slate-500 mt-0.5">
+                        {hasWebSatis
+                          ? 'Lite: 14.900 TL · Pro: 89.000 TL'
+                          : 'Kapsam sekmesinde seçili değil'}
+                      </div>
                     </td>
-                    <td className="py-3.5 px-4 text-center text-xs text-slate-500">
-                      {hasWebSatis ? 'Aktif' : 'Dahil Değil'}
+                    <td className="py-3.5 px-4">
+                      <div className="inline-flex items-center p-0.5 bg-slate-100 rounded-md mx-auto">
+                        {(['Lite', 'Pro'] as ProductTierChoice[]).map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            disabled={!hasWebSatis}
+                            onClick={() => setProductTier('WEB_SATIS', t)}
+                            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
+                              productTiers.WEB_SATIS === t
+                                ? 'bg-white text-slate-900 shadow-xs'
+                                : 'text-slate-600'
+                            }`}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
                     </td>
                     <td className="py-3.5 px-4">
                       <input
@@ -225,17 +310,82 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
                     </td>
                   </tr>
 
-                  {/* Row 3: CRM Kullanıcı Adedi */}
+                  {/* Row 3: InsurChat */}
+                  <tr className={!hasInsurChat ? 'bg-slate-50/70 opacity-60' : ''}>
+                    <td className="py-3.5 px-4">
+                      <div className="font-medium text-slate-900">
+                        InsurChat Asistan ({productTiers.INSURCHAT})
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">
+                        {hasInsurChat
+                          ? 'Lite: 4.900 TL · Pro: 59.000 TL başlangıç'
+                          : 'Kapsam sekmesinde seçili değil'}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <div className="inline-flex items-center p-0.5 bg-slate-100 rounded-md mx-auto">
+                        {(['Lite', 'Pro'] as ProductTierChoice[]).map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            disabled={!hasInsurChat}
+                            onClick={() => setProductTier('INSURCHAT', t)}
+                            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
+                              productTiers.INSURCHAT === t
+                                ? 'bg-white text-slate-900 shadow-xs'
+                                : 'text-slate-600'
+                            }`}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <input
+                        type="number"
+                        min={0}
+                        step={500}
+                        disabled={!hasInsurChat}
+                        value={proposal.pricing.insurChatSetupFee || 0}
+                        onChange={(e) =>
+                          updatePricing(
+                            'insurChatSetupFee',
+                            Math.max(0, Number(e.target.value))
+                          )
+                        }
+                        className="w-full text-right font-mono text-sm px-2.5 py-1.5 border border-slate-200 rounded-md focus:outline-none focus:border-blue-600 disabled:bg-slate-100 tabular-nums"
+                      />
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <input
+                        type="number"
+                        min={0}
+                        step={500}
+                        disabled={!hasInsurChat}
+                        value={proposal.pricing.insurChatMonthlyFee ?? 4900}
+                        onChange={(e) =>
+                          updatePricing(
+                            'insurChatMonthlyFee',
+                            Math.max(0, Number(e.target.value))
+                          )
+                        }
+                        className="w-full text-right font-mono text-sm px-2.5 py-1.5 border border-slate-200 rounded-md focus:outline-none focus:border-blue-600 disabled:bg-slate-100 tabular-nums"
+                      />
+                    </td>
+                  </tr>
+
+                  {/* Row 4: CRM & Web Satış Kullanıcı Adedi */}
                   <tr>
                     <td className="py-3.5 px-4">
                       <div className="font-medium text-slate-900">
                         <span className="font-mono tabular-nums">
                           {proposal.pricing.userCount}
                         </span>{' '}
-                        kullanıcı
+                        kullanıcı (tekil ücret)
                       </div>
                       <div className="text-[11px] text-slate-500 mt-0.5">
-                        Birim aylık: {formatTRY(proposal.pricing.userUnitMonthlyFee)} / kullanıcı
+                        Birim aylık: {formatTRY(proposal.pricing.userUnitMonthlyFee)} / kullanıcı · Acente başına tek kez
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
@@ -267,7 +417,7 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
                               Math.max(0, Number(e.target.value))
                             )
                           }
-                          className="w-20 text-right font-mono text-xs px-2 py-1 border border-slate-200 rounded-md focus:outline-none focus:border-blue-600 tabular-nums"
+                          className="w-16 text-right font-mono text-xs px-1.5 py-1 border border-slate-200 rounded-md focus:outline-none focus:border-blue-600 tabular-nums"
                         />
                         <span className="font-mono font-medium text-slate-900 tabular-nums w-20 text-right">
                           {formatTRY(calc.usersMonthly)}
@@ -276,17 +426,17 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
                     </td>
                   </tr>
 
-                  {/* Row 4: Sigorta Şirketi Adedi */}
+                  {/* Row 5: Sigorta Şirketi Adedi */}
                   <tr>
                     <td className="py-3.5 px-4">
                       <div className="font-medium text-slate-900">
                         <span className="font-mono tabular-nums">
                           {proposal.pricing.insurerCount}
                         </span>{' '}
-                        sigorta şirketi
+                        sigorta şirketi (tekil ücret)
                       </div>
                       <div className="text-[11px] text-slate-500 mt-0.5">
-                        Birim aylık: {formatTRY(proposal.pricing.insurerUnitMonthlyFee)} / şirket
+                        Birim aylık: {formatTRY(proposal.pricing.insurerUnitMonthlyFee)} / şirket · Ürün başına ayrıca ödenmez
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
@@ -321,7 +471,7 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
                               Math.max(0, Number(e.target.value))
                             )
                           }
-                          className="w-20 text-right font-mono text-xs px-2 py-1 border border-slate-200 rounded-md focus:outline-none focus:border-blue-600 tabular-nums"
+                          className="w-16 text-right font-mono text-xs px-1.5 py-1 border border-slate-200 rounded-md focus:outline-none focus:border-blue-600 tabular-nums"
                         />
                         <span className="font-mono font-medium text-slate-900 tabular-nums w-20 text-right">
                           {formatTRY(calc.insurersMonthly)}
@@ -419,7 +569,7 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
                 type="text"
                 value={newExtraName}
                 onChange={(e) => setNewExtraName(e.target.value)}
-                placeholder="Ek modül / hizmet adı (Örn: InsurChat WhatsApp, Özel Raporlama)"
+                placeholder="Ek modül / hizmet adı (Örn: Call-center, Şube Modülü, +100 Sohbet)"
                 className="flex-1 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-blue-600"
               />
               <div className="flex items-center gap-2">
@@ -453,7 +603,7 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
             </div>
           </div>
 
-          {/* Transaction Volume Overage Simulator (Page 4 Note #3) */}
+          {/* Transaction Volume Overage Simulator */}
           <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
@@ -512,7 +662,6 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
 
         {/* Right Column: Discount Campaign Card + Commercial Notes */}
         <div className="xl:col-span-4 space-y-6">
-          {/* Campaign & Discount Box (Blue Banner from Page 4) */}
           <div className="bg-blue-600 text-white rounded-xl p-6 space-y-5">
             <div>
               <div className="text-xs font-medium text-blue-100">
@@ -621,7 +770,6 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
             </div>
           </div>
 
-          {/* Commercial Notes from PDF Page 4 */}
           <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
             <h3 className="font-display text-sm font-semibold text-slate-900">
               Fiyatlandırma Notları & Ticari Şartlar

@@ -10,12 +10,14 @@ import {
   Loader2,
   Menu,
   PackageCheck,
+  Tag,
   X,
 } from 'lucide-react';
 import { InsurUpLogo } from './components/InsurUpLogo';
 import { PackageMatrixView } from './components/PackageMatrixView';
 import { PartnersDirectoryView } from './components/PartnersDirectoryView';
 import { PricingCalculatorView } from './components/PricingCalculatorView';
+import { PricingCatalogView } from './components/PricingCatalogView';
 import { ProposalDocumentPages } from './components/ProposalDocumentPages';
 import { ProposalPreviewView } from './components/ProposalPreviewView';
 import { ProposalsListView } from './components/ProposalsListView';
@@ -25,7 +27,7 @@ import { Proposal, ProposalStatus, WorkspaceTab } from './types/proposal';
 import { generateProposalPdfFile } from './utils/pdfExport';
 import { calculateProposalPricing, formatTRY } from './utils/pricing';
 
-const STORAGE_KEY = 'insurup_proposals_panel_v1';
+const STORAGE_KEY = 'insurup_proposals_panel_v2';
 
 interface NavItem {
   id: WorkspaceTab;
@@ -35,6 +37,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'teklifler', label: 'Teklifler', icon: FolderKanban },
+  { id: 'fiyatlarimiz', label: 'Fiyatlarımız', icon: Tag },
   { id: 'kapsam', label: 'Müşteri & Kapsam', icon: Layers },
   { id: 'paketler', label: 'Paket & Özellikler', icon: PackageCheck },
   { id: 'fiyatlandirma', label: 'Fiyatlandırma', icon: Calculator },
@@ -57,6 +60,11 @@ function createBlankProposal(existingCount: number): Proposal {
     proposalDate: todayIso,
     selectedModules: ['CRM', 'WEB_SATIS', 'INSURCHAT', 'INSURGATEWAY'],
     selectedPackage: 'DİJİTAL',
+    productTiers: {
+      CRM: 'Pro',
+      WEB_SATIS: 'Lite',
+      INSURCHAT: 'Lite',
+    },
     customFeatureOverrides: {},
     selectedInsurerIds: [
       'ins_aksigorta',
@@ -69,10 +77,12 @@ function createBlankProposal(existingCount: number): Proposal {
       'ins_quick',
     ],
     pricing: {
-      crmSetupFee: 25000,
-      crmMonthlyFee: 14500,
-      webSatisSetupFee: 25000,
-      webSatisMonthlyFee: 7500,
+      crmSetupFee: 0,
+      crmMonthlyFee: 29000,
+      webSatisSetupFee: 0,
+      webSatisMonthlyFee: 14900,
+      insurChatSetupFee: 0,
+      insurChatMonthlyFee: 4900,
       userCount: 10,
       userUnitSetupFee: 0,
       userUnitMonthlyFee: 300,
@@ -207,7 +217,6 @@ export default function App() {
     setIsGeneratingPdf(true);
     setPdfFeedback(null);
 
-    // Allow React to flush exportTargetProposalId into offscreen DOM before capturing
     await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 60)));
 
     try {
@@ -452,6 +461,14 @@ export default function App() {
               onDuplicateProposal={handleDuplicateProposal}
               onDeleteProposal={handleDeleteProposal}
               onChangeStatus={handleChangeStatus}
+            />
+          )}
+
+          {activeTab === 'fiyatlarimiz' && (
+            <PricingCatalogView
+              proposal={activeProposal}
+              onUpdateProposal={updateActiveProposal}
+              onGoToCalculator={() => setActiveTab('fiyatlandirma')}
             />
           )}
 
