@@ -29,6 +29,7 @@ import { ProposalDocumentPages } from './ProposalDocumentPages';
 interface ProposalPreviewViewProps {
   proposal: Proposal;
   isGeneratingPdf: boolean;
+  pdfProgress?: number;
   onExportPdf: () => void;
   onSaveAsDraft?: () => void;
   onNavigateStep: (tab: WorkspaceTab) => void;
@@ -37,6 +38,7 @@ interface ProposalPreviewViewProps {
 export const ProposalPreviewView: React.FC<ProposalPreviewViewProps> = ({
   proposal,
   isGeneratingPdf,
+  pdfProgress = 0,
   onExportPdf,
   onSaveAsDraft,
   onNavigateStep,
@@ -264,18 +266,40 @@ export const ProposalPreviewView: React.FC<ProposalPreviewViewProps> = ({
             type="button"
             disabled={isGeneratingPdf}
             onClick={onExportPdf}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors whitespace-nowrap cursor-pointer"
+            className="relative overflow-hidden inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-95 transition-all whitespace-nowrap cursor-pointer"
           >
-            {isGeneratingPdf ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>PDF Oluşturuluyor...</span>
-              </>
-            ) : (
-              <>
-                <FileDown className="w-3.5 h-3.5" />
-                <span>Teklif Oluştur (PDF)</span>
-              </>
+            {isGeneratingPdf && (
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 left-0 bg-blue-500/40 transition-all duration-200 ease-out"
+                style={{ width: `${Math.max(12, pdfProgress)}%` }}
+              />
+            )}
+            <span className="relative z-10 inline-flex items-center gap-1.5">
+              {isGeneratingPdf ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-200 shrink-0" />
+                  <span className="tabular-nums">
+                    PDF Oluşturuluyor %{Math.max(8, pdfProgress)}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <FileDown className="w-3.5 h-3.5 shrink-0" />
+                  <span>Teklif Oluştur (PDF)</span>
+                </>
+              )}
+            </span>
+            {isGeneratingPdf && (
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-blue-950/40"
+              >
+                <span
+                  className="block h-full bg-sky-300 transition-all duration-200 ease-out"
+                  style={{ width: `${Math.max(12, pdfProgress)}%` }}
+                />
+              </span>
             )}
           </button>
         </div>
@@ -301,10 +325,39 @@ export const ProposalPreviewView: React.FC<ProposalPreviewViewProps> = ({
                 type="button"
                 disabled={isGeneratingPdf}
                 onClick={onExportPdf}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors cursor-pointer"
+                className="relative overflow-hidden inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-95 rounded-lg transition-all cursor-pointer"
               >
-                <FileDown className="w-3.5 h-3.5" />
-                <span>PDF İndir</span>
+                {isGeneratingPdf && (
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-y-0 left-0 bg-blue-500/40 transition-all duration-200 ease-out"
+                    style={{ width: `${Math.max(12, pdfProgress)}%` }}
+                  />
+                )}
+                <span className="relative z-10 inline-flex items-center gap-1.5">
+                  {isGeneratingPdf ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-200 shrink-0" />
+                      <span className="tabular-nums">%{Math.max(8, pdfProgress)}</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="w-3.5 h-3.5 shrink-0" />
+                      <span>Teklifi İndir</span>
+                    </>
+                  )}
+                </span>
+                {isGeneratingPdf && (
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-blue-950/40"
+                  >
+                    <span
+                      className="block h-full bg-sky-300 transition-all duration-200 ease-out"
+                      style={{ width: `${Math.max(12, pdfProgress)}%` }}
+                    />
+                  </span>
+                )}
               </button>
               <button
                 type="button"

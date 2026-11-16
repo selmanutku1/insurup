@@ -210,6 +210,7 @@ export default function App() {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState(0);
   const [exportTargetProposalId, setExportTargetProposalId] = useState<string | null>(null);
   const [exportOverride, setExportOverride] = useState<{
     proposal: Proposal;
@@ -591,6 +592,7 @@ export default function App() {
         versionNumber: revisionOverride.versionNumber,
       });
       setIsGeneratingPdf(true);
+      setPdfProgress(8);
       setPdfFeedback(null);
 
       await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 90)));
@@ -602,7 +604,8 @@ export default function App() {
         const fileName = await generateProposalPdfFile(
           exportContainerRef.current,
           revProposal,
-          revisionOverride.versionNumber
+          revisionOverride.versionNumber,
+          (pct) => setPdfProgress(pct)
         );
         setPdfFeedback({
           type: 'success',
@@ -618,6 +621,7 @@ export default function App() {
         });
       } finally {
         setIsGeneratingPdf(false);
+        setPdfProgress(0);
         setExportOverride(null);
         setTimeout(() => {
           setPdfFeedback(null);
@@ -661,6 +665,7 @@ export default function App() {
 
     setExportTargetProposalId(normalizedProposal.id);
     setIsGeneratingPdf(true);
+    setPdfProgress(8);
     setPdfFeedback(null);
 
     await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 60)));
@@ -672,7 +677,8 @@ export default function App() {
       const fileName = await generateProposalPdfFile(
         exportContainerRef.current,
         normalizedProposal,
-        normalizedProposal.revisionNumber
+        normalizedProposal.revisionNumber,
+        (pct) => setPdfProgress(pct)
       );
       setPdfFeedback({
         type: 'success',
@@ -688,6 +694,7 @@ export default function App() {
       });
     } finally {
       setIsGeneratingPdf(false);
+      setPdfProgress(0);
       setExportTargetProposalId(null);
       setTimeout(() => {
         setPdfFeedback(null);
@@ -931,19 +938,43 @@ export default function App() {
                   type="button"
                   disabled={isGeneratingPdf}
                   onClick={() => triggerPdfGeneration()}
-                  className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                  className="relative overflow-hidden inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-95 transition-all whitespace-nowrap shrink-0 cursor-pointer"
                 >
-                  {isGeneratingPdf ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span className="hidden xs:inline">PDF İndiriliyor...</span>
-                      <span className="xs:hidden">PDF...</span>
-                    </>
-                  ) : (
-                    <>
-                      <FileDown className="w-3.5 h-3.5" />
-                      <span>Teklifi İndir</span>
-                    </>
+                  {isGeneratingPdf && (
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-y-0 left-0 bg-blue-500/40 transition-all duration-200 ease-out"
+                      style={{ width: `${Math.max(12, pdfProgress)}%` }}
+                    />
+                  )}
+                  <span className="relative z-10 inline-flex items-center gap-1.5 sm:gap-2">
+                    {isGeneratingPdf ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-200 shrink-0" />
+                        <span className="hidden xs:inline tabular-nums">
+                          PDF İndiriliyor %{Math.max(8, pdfProgress)}
+                        </span>
+                        <span className="xs:hidden tabular-nums">
+                          %{Math.max(8, pdfProgress)}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <FileDown className="w-3.5 h-3.5 shrink-0" />
+                        <span>Teklifi İndir</span>
+                      </>
+                    )}
+                  </span>
+                  {isGeneratingPdf && (
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-blue-950/40"
+                    >
+                      <span
+                        className="block h-full bg-sky-300 transition-all duration-200 ease-out"
+                        style={{ width: `${Math.max(12, pdfProgress)}%` }}
+                      />
+                    </span>
                   )}
                 </button>
               )}
@@ -1044,6 +1075,8 @@ export default function App() {
               currentRepName={activeUserProfile.name}
               activeProposalId={activeProposal.id}
               isGeneratingPdf={isGeneratingPdf}
+              pdfProgress={pdfProgress}
+              exportTargetProposalId={exportTargetProposalId}
               onSelectProposal={(id) => setActiveProposalId(id)}
               onEditProposal={(id) => {
                 setNewDraftProposal(null);
@@ -1124,6 +1157,7 @@ export default function App() {
             <ProposalPreviewView
               proposal={activeProposal}
               isGeneratingPdf={isGeneratingPdf}
+              pdfProgress={pdfProgress}
               onExportPdf={() => triggerPdfGeneration()}
               onSaveAsDraft={() => handleSaveProposalAsDraft(activeProposal.id)}
               onNavigateStep={(tab) => {

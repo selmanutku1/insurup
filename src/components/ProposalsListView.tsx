@@ -12,6 +12,7 @@ import {
   FolderKanban,
   History,
   Hourglass,
+  Loader2,
   MessageSquareText,
   Plus,
   RotateCcw,
@@ -59,6 +60,8 @@ interface ProposalsListViewProps {
   currentRepName: string;
   activeProposalId: string;
   isGeneratingPdf: boolean;
+  pdfProgress?: number;
+  exportTargetProposalId?: string | null;
   onSelectProposal: (id: string) => void;
   onEditProposal: (id: string) => void;
   onReviseProposal: (id: string, revisionNote?: string) => void;
@@ -156,6 +159,8 @@ export const ProposalsListView: React.FC<ProposalsListViewProps> = ({
   currentRepName,
   activeProposalId,
   isGeneratingPdf,
+  pdfProgress = 0,
+  exportTargetProposalId = null,
   onSelectProposal,
   onEditProposal,
   onReviseProposal,
@@ -1040,10 +1045,28 @@ export const ProposalsListView: React.FC<ProposalsListViewProps> = ({
                               ? 'Teklifi İndir (PDF)'
                               : `Eksik bilgi var: ${missingMsg}`
                           }
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
+                          className="relative overflow-hidden inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-80 disabled:cursor-not-allowed"
                         >
-                          <FileDown className="w-3.5 h-3.5" />
-                          <span>PDF</span>
+                          {isGeneratingPdf && exportTargetProposalId === proposal.id ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600 shrink-0" />
+                              <span className="tabular-nums">%{Math.max(8, pdfProgress)}</span>
+                              <span
+                                aria-hidden="true"
+                                className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-blue-200"
+                              >
+                                <span
+                                  className="block h-full bg-blue-600 transition-all duration-200 ease-out"
+                                  style={{ width: `${Math.max(12, pdfProgress)}%` }}
+                                />
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <FileDown className="w-3.5 h-3.5" />
+                              <span>PDF</span>
+                            </>
+                          )}
                         </button>
                         <button
                           type="button"
@@ -1328,9 +1351,24 @@ export const ProposalsListView: React.FC<ProposalsListViewProps> = ({
                                   ? 'Teklifi İndir (PDF)'
                                   : `Eksik bilgi var: ${missingMsg}`
                               }
-                              className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+                              className="relative overflow-hidden p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-80 disabled:cursor-not-allowed cursor-pointer"
                             >
-                              <FileDown className="w-4 h-4" />
+                              {isGeneratingPdf && exportTargetProposalId === proposal.id ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                                  <span
+                                    aria-hidden="true"
+                                    className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-blue-200"
+                                  >
+                                    <span
+                                      className="block h-full bg-blue-600 transition-all duration-200 ease-out"
+                                      style={{ width: `${Math.max(12, pdfProgress)}%` }}
+                                    />
+                                  </span>
+                                </>
+                              ) : (
+                                <FileDown className="w-4 h-4" />
+                              )}
                             </button>
                             <button
                               type="button"
@@ -1446,6 +1484,7 @@ export const ProposalsListView: React.FC<ProposalsListViewProps> = ({
         proposal={summaryProposal}
         currentRepName={currentRepName}
         isGeneratingPdf={isGeneratingPdf}
+        pdfProgress={pdfProgress}
         onClose={() => setSummaryModalProposalId(null)}
         onEditProposal={onEditProposal}
         onReviseProposal={onReviseProposal}

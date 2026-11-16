@@ -21,11 +21,20 @@ function sanitizeFileName(raw: string): string {
     .slice(0, 48);
 }
 
+export type PdfProgressCallback = (
+  percent: number,
+  currentPage: number,
+  totalPages: number
+) => void;
+
 export async function generateProposalPdfFile(
   containerElement: HTMLElement,
   proposal: Proposal,
-  versionNumber?: number
+  versionNumber?: number,
+  onProgress?: PdfProgressCallback
 ): Promise<string> {
+  onProgress?.(8, 0, 0);
+
   if (document.fonts && document.fonts.ready) {
     await document.fonts.ready;
   }
@@ -48,6 +57,8 @@ export async function generateProposalPdfFile(
   if (pageElements.length === 0) {
     throw new Error('Oluşturulacak teklif sayfası bulunamadı.');
   }
+
+  onProgress?.(16, 0, pageElements.length);
 
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -102,7 +113,12 @@ export async function generateProposalPdfFile(
 
       pdf.link(xMm, yMm, wMm, hMm, { url: rawHref });
     }
+
+    const pagePercent = Math.round(16 + ((i + 1) / pageElements.length) * 80);
+    onProgress?.(pagePercent, i + 1, pageElements.length);
   }
+
+  onProgress?.(100, pageElements.length, pageElements.length);
 
   const clientSlug = sanitizeFileName(proposal.clientName || 'Musteri');
   const codeSlug = sanitizeFileName(proposal.code || 'Teklif');
