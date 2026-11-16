@@ -4,6 +4,7 @@ import {
   Clock,
   Copy,
   Eye,
+  FileDown,
   FileEdit,
   FileText,
   Plus,
@@ -22,9 +23,11 @@ import {
 interface ProposalsListViewProps {
   proposals: Proposal[];
   activeProposalId: string;
+  isGeneratingPdf: boolean;
   onSelectProposal: (id: string) => void;
   onEditProposal: (id: string) => void;
   onPreviewProposal: (id: string) => void;
+  onExportProposalPdf: (id: string) => void;
   onCreateProposal: () => void;
   onDuplicateProposal: (id: string) => void;
   onDeleteProposal: (id: string) => void;
@@ -75,9 +78,11 @@ function StatusIndicator({ status }: { status: ProposalStatus }) {
 export const ProposalsListView: React.FC<ProposalsListViewProps> = ({
   proposals,
   activeProposalId,
+  isGeneratingPdf,
   onSelectProposal,
   onEditProposal,
   onPreviewProposal,
+  onExportProposalPdf,
   onCreateProposal,
   onDuplicateProposal,
   onDeleteProposal,
@@ -360,6 +365,15 @@ export const ProposalsListView: React.FC<ProposalsListViewProps> = ({
                             className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                           >
                             <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isGeneratingPdf}
+                            onClick={() => onExportProposalPdf(proposal.id)}
+                            title="PDF Teklif Oluştur"
+                            className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-40 cursor-pointer"
+                          >
+                            <FileDown className="w-4 h-4" />
                           </button>
                           <button
                             type="button"
