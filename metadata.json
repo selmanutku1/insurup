@@ -1,0 +1,6 @@
+{
+  "name": "InsurUp Teklif & Yapılandırma Paneli",
+  "description": "InsurUp CRM, Web Satış, InsurChat ve InsurGateway modülleri için interaktif teklif hazırlama, paket karşılaştırma, fiyatlandırma hesaplama ve canlı doküman önizleme yazılım paneli.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
