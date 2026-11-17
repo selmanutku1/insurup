@@ -68,22 +68,24 @@ export function calculateProposalPricing(proposal: Proposal): CalculatedPricing 
 
   let discountAmountMonthly = 0;
   let effectiveDiscountPercent = 0;
+  let finalMonthly = subtotalMonthly;
 
   if (hasCampaign) {
     if (pricing.discountType === 'percent') {
       const pct = Math.min(100, Math.max(0, pricing.discountValue));
       discountAmountMonthly = Math.round((subtotalMonthly * pct) / 100);
       effectiveDiscountPercent = Math.round(pct * 10) / 10;
+      finalMonthly = Math.max(0, subtotalMonthly - discountAmountMonthly);
     } else {
-      discountAmountMonthly = Math.min(subtotalMonthly, Math.max(0, pricing.discountValue));
+      const specialPrice = Math.max(0, pricing.discountValue);
+      finalMonthly = specialPrice;
+      discountAmountMonthly = Math.max(0, subtotalMonthly - specialPrice);
       effectiveDiscountPercent =
-        subtotalMonthly > 0
+        subtotalMonthly > 0 && discountAmountMonthly > 0
           ? Math.round((discountAmountMonthly / subtotalMonthly) * 1000) / 10
           : 0;
     }
   }
-
-  const finalMonthly = Math.max(0, subtotalMonthly - discountAmountMonthly);
 
   // 150.000 işlem dahil, her artan 150.000 işlem için +25.000 TL
   const excessTransactions = Math.max(0, pricing.estimatedMonthlyTransactions - 150000);
@@ -145,6 +147,19 @@ export function formatDateTR(isoDate: string): string {
   const parts = isoDate.split('-');
   if (parts.length !== 3) return isoDate;
   return `${parts[2]}.${parts[1]}.${parts[0]}`;
+}
+
+export function addDaysToIsoDate(isoDate: string, days: number): string {
+  const parts = isoDate.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(Number.isNaN)) {
+    const fallback = new Date();
+    fallback.setDate(fallback.getDate() + days);
+    return `${fallback.getFullYear()}-${String(fallback.getMonth() + 1).padStart(2, '0')}-${String(
+      fallback.getDate()
+    ).padStart(2, '0')}`;
+  }
+  const date = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2] + days));
+  return date.toISOString().slice(0, 10);
 }
 
 export function getEffectiveFeatureValue(

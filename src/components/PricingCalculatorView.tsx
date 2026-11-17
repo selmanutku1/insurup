@@ -31,6 +31,7 @@ import {
   SalesRepProfile,
 } from '../types/proposal';
 import {
+  addDaysToIsoDate,
   calculateProposalPricing,
   formatDateTR,
   formatDiscountPercentTR,
@@ -454,7 +455,29 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
             <input
               type="date"
               value={proposal.proposalDate}
-              onChange={(e) => updateProposalField('proposalDate', e.target.value)}
+              onChange={(e) => {
+                const nextDate = e.target.value;
+                onUpdateProposal((prev) => {
+                  const prevAutoValidUntil = prev.proposalDate
+                    ? addDaysToIsoDate(prev.proposalDate, 15)
+                    : '';
+                  const shouldSyncValidUntil =
+                    Boolean(nextDate) &&
+                    (!prev.pricing.campaignValidUntil ||
+                      prev.pricing.campaignValidUntil === prevAutoValidUntil);
+                  return {
+                    ...prev,
+                    proposalDate: nextDate,
+                    pricing: shouldSyncValidUntil
+                      ? {
+                          ...prev.pricing,
+                          campaignValidUntil: addDaysToIsoDate(nextDate, 15),
+                        }
+                      : prev.pricing,
+                    updatedAt: new Date().toISOString(),
+                  };
+                });
+              }}
               className="w-full px-3 py-2 text-sm font-mono bg-white border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-blue-600"
             />
           </div>
@@ -1250,7 +1273,11 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
                         ...prev.pricing,
                         hasCampaign: true,
                         discountValue:
-                          prev.pricing.discountValue > 0 ? prev.pricing.discountValue : 10,
+                          prev.pricing.discountValue > 0
+                            ? prev.pricing.discountValue
+                            : prev.pricing.discountType === 'fixed'
+                              ? calc.subtotalMonthly
+                              : 10,
                         campaignCondition:
                           prev.pricing.campaignCondition &&
                           !prev.pricing.campaignCondition.includes('Standart Liste Fiyatı')
@@ -1321,7 +1348,7 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
               ) : (
                 <div className="mt-1.5 text-xs text-slate-400">
                   {calc.hasCampaign
-                    ? 'İndirim oranı veya tutarı giriniz.'
+                    ? 'İndirim oranı veya özel fiyat giriniz.'
                     : 'Kampanya uygulanmadan standart liste fiyatı geçerlidir.'}
                 </div>
               )}
@@ -1333,7 +1360,23 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => updatePricing('discountType', 'percent')}
+                    onClick={() =>
+                      onUpdateProposal((prev) => ({
+                        ...prev,
+                        pricing: {
+                          ...prev.pricing,
+                          discountType: 'percent',
+                          discountValue:
+                            prev.pricing.discountType === 'fixed'
+                              ? Math.min(
+                                  90,
+                                  Math.max(0, Math.round(calc.effectiveDiscountPercent))
+                                )
+                              : prev.pricing.discountValue,
+                        },
+                        updatedAt: new Date().toISOString(),
+                      }))
+                    }
                     className={`py-2 px-3 text-xs font-medium rounded-lg border transition-colors cursor-pointer ${
                       proposal.pricing.discountType === 'percent'
                         ? 'bg-white text-blue-700 border-white'
@@ -1344,14 +1387,27 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => updatePricing('discountType', 'fixed')}
+                    onClick={() =>
+                      onUpdateProposal((prev) => ({
+                        ...prev,
+                        pricing: {
+                          ...prev.pricing,
+                          discountType: 'fixed',
+                          discountValue:
+                            prev.pricing.discountType === 'percent'
+                              ? calc.finalMonthly
+                              : prev.pricing.discountValue,
+                        },
+                        updatedAt: new Date().toISOString(),
+                      }))
+                    }
                     className={`py-2 px-3 text-xs font-medium rounded-lg border transition-colors cursor-pointer ${
                       proposal.pricing.discountType === 'fixed'
                         ? 'bg-white text-blue-700 border-white'
                         : 'bg-blue-700/60 text-white border-blue-500 hover:bg-blue-700'
                     }`}
                   >
-                    Sabit Tutar (TL)
+                    Özel Fiyat Ver
                   </button>
                 </div>
 
@@ -1381,12 +1437,13 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
                   <label className="block text-xs text-blue-100 mb-1">
                     {proposal.pricing.discountType === 'percent'
                       ? 'İndirim Oranı (%)'
-                      : 'İndirim Tutarı (TL)'}
+                      : 'Özel Fiyat (TL)'}
                   </label>
                   <input
                     type="number"
                     min={0}
-                    max={proposal.pricing.discountType === 'percent' ? 90 : calc.subtotalMonthly}
+                    max={proposal.pricing.discountType === 'percent' ? 90 : undefined}
+                    step={proposal.pricing.discountType === 'fixed' ? 100 : undefined}
                     value={proposal.pricing.discountValue}
                     onChange={(e) =>
                       updatePricing('discountValue', Math.max(0, Number(e.target.value)))

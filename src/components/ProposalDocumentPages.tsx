@@ -364,18 +364,31 @@ export const ProposalDocumentPages: React.FC<ProposalDocumentPagesProps> = ({
               </h3>
               <div
                 className={`grid gap-3.5 ${
-                  fixedA4ForExport ? 'grid-cols-4' : 'grid-cols-2 sm:grid-cols-4'
+                  fixedA4ForExport ? 'grid-cols-3' : 'grid-cols-1 sm:grid-cols-3'
                 }`}
               >
                 {ECOSYSTEM_VALUE_METRICS.map((m) => (
                   <div
                     key={m.label}
-                    className="p-4 rounded-xl bg-[#F5F8FF] border border-[#DBEAFE]"
+                    className="p-4 rounded-xl bg-[#F5F8FF] border border-[#DBEAFE] flex flex-col justify-start"
                   >
-                    <div className="font-display text-[26px] font-bold text-[#2563EB] tabular-nums">
+                    <div className="font-display text-[26px] font-bold text-[#2563EB] tabular-nums leading-tight">
                       {m.value}
                     </div>
-                    <div className="mt-1 text-[11px] text-slate-600">{m.label}</div>
+                    <div
+                      className={`mt-1 text-xs ${
+                        m.description
+                          ? 'font-bold text-slate-900'
+                          : 'font-medium text-slate-700'
+                      }`}
+                    >
+                      {m.label}
+                    </div>
+                    {m.description && (
+                      <div className="mt-1 text-[11px] text-slate-600 leading-snug">
+                        {m.description}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -714,36 +727,76 @@ export const ProposalDocumentPages: React.FC<ProposalDocumentPagesProps> = ({
             fixedA4ForExport ? '' : 'border border-slate-800'
           }`}
         >
-          <div className="space-y-6">
+          <div className={fixedA4ForExport ? 'space-y-3' : 'space-y-4'}>
             <div className="flex items-center justify-between">
               <InsurUpLogo theme="light" size="sm" href={INSURUP_SITE_URL} />
             </div>
 
-            <h2 className="font-display text-[28px] font-bold tracking-tight text-white max-w-[460px] leading-snug">
+            <h2
+              className={`font-display font-bold tracking-tight text-white max-w-[460px] leading-snug ${
+                fixedA4ForExport ? 'text-[24px]' : 'text-xl sm:text-[26px]'
+              }`}
+            >
               Sigorta ve finans ekosisteminden bazı iş ortaklarımız.
             </h2>
 
             <div
-              className={`grid gap-2.5 ${
-                fixedA4ForExport ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'
+              className={`grid ${
+                fixedA4ForExport
+                  ? 'grid-cols-2 grid-rows-[repeat(17,minmax(0,1fr))] grid-flow-col gap-x-2.5 gap-y-1.5'
+                  : 'grid-cols-1 sm:grid-cols-2 sm:grid-rows-[repeat(17,minmax(0,1fr))] sm:grid-flow-col gap-2'
               }`}
             >
-              {AGENCY_PARTNERS.map((partner) => (
-                <div
-                  key={partner.id}
-                  className="px-3.5 py-2.5 rounded-lg bg-[#0F182B] border border-[#1E2B45] text-[11px] font-medium text-slate-200 flex items-center gap-2.5"
-                >
-                  <span className="w-1.5 h-1.5 bg-[#2563EB] rounded-[1px] shrink-0" />
-                  <span>{partner.name}</span>
-                </div>
-              ))}
+              {AGENCY_PARTNERS.map((partner) => {
+                const links = partner.links || [];
+                return (
+                  <div
+                    key={partner.id}
+                    className={`px-3 rounded-lg bg-[#0F182B] border border-[#1E2B45] flex items-center gap-2.5 ${
+                      fixedA4ForExport ? 'py-[5px] min-h-[36px]' : 'py-2 min-h-[42px]'
+                    }`}
+                  >
+                    <span className="w-1.5 h-1.5 bg-[#2563EB] rounded-full shrink-0" />
+                    <div className="min-w-0 flex-1 flex flex-col justify-center">
+                      <div className="text-[11px] font-semibold text-slate-100 leading-tight truncate">
+                        {partner.name}
+                      </div>
+                      {links.length > 0 && (
+                        <div
+                          className={`mt-0.5 leading-tight flex flex-wrap items-center gap-x-1 text-slate-400 ${
+                            fixedA4ForExport ? 'text-[8.5px]' : 'text-[10px]'
+                          }`}
+                        >
+                          {links.map((link, idx) => (
+                            <React.Fragment key={link.url}>
+                              {idx > 0 && (
+                                <span className="text-slate-500 select-none" aria-hidden="true">
+                                  |
+                                </span>
+                              )}
+                              <a
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="no-underline text-slate-400 hover:text-sky-300 transition-colors cursor-pointer"
+                              >
+                                {link.url}
+                              </a>
+                            </React.Fragment>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <div
-              className={`bg-[#182952] border border-[#2C4787] rounded-xl px-5 sm:px-6 py-5 flex gap-4 ${
+              className={`bg-[#182952] border border-[#2C4787] rounded-xl px-5 sm:px-6 flex gap-4 ${
                 fixedA4ForExport
-                  ? 'items-center justify-between'
-                  : 'flex-col sm:flex-row sm:items-center justify-between'
+                  ? 'py-3.5 items-center justify-between'
+                  : 'py-4 flex-col sm:flex-row sm:items-center justify-between'
               }`}
             >
               <div>
@@ -758,7 +811,7 @@ export const ProposalDocumentPages: React.FC<ProposalDocumentPagesProps> = ({
                 href={INSURUP_SITE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block font-display text-xs font-semibold text-white underline underline-offset-4 whitespace-nowrap shrink-0 hover:text-sky-300 transition-colors"
+                className="inline-block font-display text-xs font-semibold text-white no-underline whitespace-nowrap shrink-0 hover:text-sky-300 transition-colors"
               >
                 www.insurup.com
               </a>
@@ -1012,15 +1065,11 @@ export const ProposalDocumentPages: React.FC<ProposalDocumentPagesProps> = ({
               >
                 <div className="space-y-1.5 min-w-0">
                   <div className="text-[10px] font-bold tracking-[0.14em] text-blue-100">
-                    HEMEN DEĞERLENDİRELİM
+                    HEMEN DEĞERLENDİRİN
                   </div>
                   <h3 className="font-display text-lg sm:text-[21px] font-bold text-white leading-snug">
                     Süreci birlikte başlatmak için tek adım.
                   </h3>
-                  <p className="text-xs text-blue-100 leading-relaxed">
-                    {proposal.nextStepAction ||
-                      'Canlı demo, teknik kapsam değerlendirmesi ve geçiş takvimi için görüşme planlayalım.'}
-                  </p>
                   <div className="pt-1 text-[11px] font-medium text-white/90">
                     KDV Muafiyetli Fiyatlandırma · Ek Kurulum Sürprizi Yok · Uzman Geçiş Desteği
                   </div>

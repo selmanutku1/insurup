@@ -197,9 +197,15 @@ export interface SalesRepProfile {
   role?: 'Sistem Yöneticisi' | 'Satış Temsilcisi';
 }
 
+export interface PartnerLink {
+  label: string;
+  url: string;
+}
+
 export interface PartnerItem {
   id: string;
   name: string;
   group: 'acente' | 'banka' | 'sigorta';
   detail?: string;
+  links?: PartnerLink[];
 }

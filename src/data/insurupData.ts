@@ -278,11 +278,18 @@ export const ECOSYSTEM_MODULES: EcosystemModule[] = [
   },
 ];
 
-export const ECOSYSTEM_VALUE_METRICS = [
+export const ECOSYSTEM_VALUE_METRICS: {
+  value: string;
+  label: string;
+  description?: string;
+}[] = [
   { value: '30+', label: 'Sigorta şirketi' },
   { value: '1.000+', label: 'Sigorta ürünü' },
-  { value: '10', label: 'Online sigorta satış branşı' },
-  { value: '20', label: 'Offline başvuru branşı' },
+  {
+    value: '30',
+    label: 'Branş',
+    description: '10 branşta online satış, 20 branşta offline süreç.',
+  },
 ];
 
 export const OPERATIONAL_GAINS = [
@@ -486,32 +493,159 @@ export const PRICING_NOTES = [
 ];
 
 export const AGENCY_PARTNERS: PartnerItem[] = [
-  { id: 'ag_akpolat', name: 'Akpolat Sigorta', group: 'acente' },
-  { id: 'ag_armor', name: 'Armor Broker', group: 'acente' },
-  { id: 'ag_baykaralar', name: 'Baykaralar Sigorta', group: 'acente' },
+  {
+    id: 'ag_akpolat',
+    name: 'Akpolat Sigorta',
+    group: 'acente',
+    links: [{ label: 'akpolatsigorta.com', url: 'https://www.akpolatsigorta.com/' }],
+  },
+  { id: 'ag_altas', name: 'Altaş Sigorta', group: 'acente' },
+  {
+    id: 'ag_armor',
+    name: 'Armor Broker',
+    group: 'acente',
+    links: [{ label: 'sigorka.com', url: 'https://sigorka.com/' }],
+  },
+  {
+    id: 'ag_baykaralar',
+    name: 'Baykaralar Sigorta',
+    group: 'acente',
+    links: [
+      { label: 'futuresigorta.com', url: 'https://www.futuresigorta.com/' },
+      { label: 'futurebes.com', url: 'https://www.futurebes.com/' },
+    ],
+  },
   { id: 'ag_dogan', name: 'Doğan Sigorta', group: 'acente' },
-  { id: 'ag_doga', name: 'Doğa Sigorta', group: 'acente' },
-  { id: 'ag_eacente', name: 'Eacente Sigorta', group: 'acente' },
-  { id: 'ag_caki', name: 'Ercan Çakı – Çakı Sigorta', group: 'acente' },
-  { id: 'ag_gokbay', name: 'Gökbay Sigorta', group: 'acente' },
-  { id: 'ag_imc', name: 'İMC Broker', group: 'acente' },
-  { id: 'ag_wap', name: 'Wap Sigorta', group: 'acente' },
-  { id: 'ag_ilkemturk', name: 'İlkemtürk Sigorta', group: 'acente' },
-  { id: 'ag_lig', name: 'Lig Sigorta', group: 'acente' },
-  { id: 'ag_liberte', name: 'Liberte Sigorta', group: 'acente' },
-  { id: 'ag_magarsus', name: 'Magarsus Broker (sigortaavm.com)', group: 'acente' },
-  { id: 'ag_mono', name: 'Mono Sigorta', group: 'acente' },
-  { id: 'ag_nar', name: 'Nar Kurumsal Sigorta', group: 'acente' },
+  {
+    id: 'ag_doga',
+    name: 'Doğa Sigorta',
+    group: 'acente',
+    links: [{ label: 'dogasigorta.com', url: 'https://www.dogasigorta.com/' }],
+  },
+  {
+    id: 'ag_eacente',
+    name: 'Eacente Sigorta',
+    group: 'acente',
+    links: [{ label: 'e-acente.com.tr', url: 'https://e-acente.com.tr/' }],
+  },
+  { id: 'ag_enuygun', name: 'Enuygun', group: 'acente' },
+  {
+    id: 'ag_caki',
+    name: 'Ercan Çakı',
+    group: 'acente',
+    links: [
+      { label: 'cakisigorta.com', url: 'http://cakisigorta.com' },
+      { label: 'polibul.com', url: 'http://polibul.com' },
+    ],
+  },
+  {
+    id: 'ag_gokbay',
+    name: 'Gökbay Sigorta',
+    group: 'acente',
+    links: [{ label: 'gokbaysigorta.com.tr', url: 'https://gokbaysigorta.com.tr/' }],
+  },
+  {
+    id: 'ag_imc',
+    name: 'İMC Broker',
+    group: 'acente',
+    links: [{ label: 'sigortanikarsilastir.com', url: 'https://www.sigortanikarsilastir.com/' }],
+  },
+  {
+    id: 'ag_ilkemturk',
+    name: 'İlkemtürk Sigorta',
+    group: 'acente',
+    links: [{ label: 'maxipoli.com', url: 'http://maxipoli.com' }],
+  },
+  {
+    id: 'ag_liberte',
+    name: 'Liberte Sigorta',
+    group: 'acente',
+    links: [
+      { label: 'libertesigorta.com', url: 'http://libertesigorta.com' },
+      { label: 'ucuzunubuldum.com', url: 'http://ucuzunubuldum.com' },
+    ],
+  },
+  {
+    id: 'ag_lig',
+    name: 'Lig Sigorta',
+    group: 'acente',
+    links: [{ label: 'sigortalig.com.tr', url: 'http://sigortalig.com.tr' }],
+  },
+  {
+    id: 'ag_magarsus',
+    name: 'Magarsus Broker',
+    group: 'acente',
+    links: [{ label: 'sigortaavm.com', url: 'http://sigortaavm.com' }],
+  },
+  {
+    id: 'ag_mediamarkt',
+    name: 'MediaMarkt',
+    group: 'acente',
+    links: [{ label: 'mmsigortacentesi.com.tr', url: 'https://mmsigortacentesi.com.tr/' }],
+  },
+  {
+    id: 'ag_mono',
+    name: 'Mono Sigorta',
+    group: 'acente',
+    links: [{ label: 'monosigorta.com', url: 'http://monosigorta.com' }],
+  },
+  {
+    id: 'ag_nar',
+    name: 'Nar Kurumsal Sigorta',
+    group: 'acente',
+    links: [{ label: 'sigortacarki.com', url: 'http://sigortacarki.com' }],
+  },
+  {
+    id: 'ag_otokoc',
+    name: 'Otokoç Sigorta',
+    group: 'acente',
+    links: [{ label: 'otokocsigorta.com', url: 'https://otokocsigorta.com/' }],
+  },
   { id: 'ag_ozgunkaya', name: 'Özgünkaya Sigorta', group: 'acente' },
-  { id: 'ag_papara', name: 'Papara', group: 'acente' },
-  { id: 'ag_sencard', name: 'Sencard', group: 'acente' },
-  { id: 'ag_sigortacep', name: 'Sigortacep', group: 'acente' },
-  { id: 'ag_sigortacim', name: 'Sigortacım Grup', group: 'acente' },
-  { id: 'ag_sigortagen', name: 'Sigortagen', group: 'acente' },
-  { id: 'ag_tss', name: 'TSS Sigorta', group: 'acente' },
-  { id: 'ag_turkcen', name: 'Turkcen Brokerlık', group: 'acente' },
-  { id: 'ag_vizyon', name: 'Vizyon Sigorta', group: 'acente' },
+  {
+    id: 'ag_papara',
+    name: 'Papara',
+    group: 'acente',
+    links: [{ label: 'paparasigorta.com', url: 'https://www.paparasigorta.com/' }],
+  },
+  {
+    id: 'ag_policeal',
+    name: 'PoliçeAl',
+    group: 'acente',
+    links: [{ label: 'policeal.net', url: 'https://policeal.net/' }],
+  },
+  { id: 'ag_policedunyasi', name: 'Poliçe Dünyası', group: 'acente' },
+  { id: 'ag_realistanbul', name: 'Real İstanbul', group: 'acente' },
   { id: 'ag_sbmturk', name: 'SBMTURK', group: 'acente' },
+  { id: 'ag_sencard', name: 'Sencard', group: 'acente' },
+  {
+    id: 'ag_sigortacim',
+    name: 'Sigortacım Grup',
+    group: 'acente',
+    links: [{ label: 'sigortacim.net', url: 'http://sigortacim.net' }],
+  },
+  {
+    id: 'ag_sigortacep',
+    name: 'Sigortacep',
+    group: 'acente',
+    links: [{ label: 'sigortacep.net', url: 'https://sigortacep.net/' }],
+  },
+  {
+    id: 'ag_sigortagen',
+    name: 'Sigortagen',
+    group: 'acente',
+    links: [{ label: 'sigortagen.com', url: 'http://sigortagen.com' }],
+  },
+  { id: 'ag_tss', name: 'TSS Sigorta', group: 'acente' },
+  {
+    id: 'ag_turkcen',
+    name: 'Turkcen Brokerlik',
+    group: 'acente',
+    links: [{ label: 'sigortanbu.com', url: 'http://sigortanbu.com' }],
+  },
+  { id: 'ag_vdf', name: 'VDF', group: 'acente' },
+  { id: 'ag_vizyon', name: 'Vizyon Sigorta', group: 'acente' },
+  { id: 'ag_wap', name: 'Wap Sigorta', group: 'acente' },
 ];
 
 export const BANK_PARTNERS: PartnerItem[] = [
@@ -803,7 +937,7 @@ export const INITIAL_PROPOSALS: Proposal[] = [
       ],
       hasCampaign: true,
       discountType: 'fixed',
-      discountValue: 2900,
+      discountValue: 42000,
       campaignCondition: '',
       campaignValidUntil: '2026-11-25',
       estimatedMonthlyTransactions: 65000,

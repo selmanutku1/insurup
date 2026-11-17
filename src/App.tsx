@@ -36,6 +36,7 @@ import {
   WorkspaceTab,
 } from './types/proposal';
 import { generateProposalPdfFile } from './utils/pdfExport';
+import { addDaysToIsoDate } from './utils/pricing';
 import {
   archiveAndReviseProposal,
   revisionToProposal,
@@ -68,7 +69,10 @@ const TAB_LABELS: Record<WorkspaceTab, string> = {
 
 function createBlankProposal(existingCount: number, creator: SalesRepProfile): Proposal {
   const nextNumber = String(43 + existingCount).padStart(3, '0');
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+    now.getDate()
+  ).padStart(2, '0')}`;
 
   return {
     id: `prop-${Date.now()}`,
@@ -124,7 +128,7 @@ function createBlankProposal(existingCount: number, creator: SalesRepProfile): P
       discountType: 'percent',
       discountValue: 10,
       campaignCondition: '',
-      campaignValidUntil: '2026-12-31',
+      campaignValidUntil: addDaysToIsoDate(todayIso, 15),
       estimatedMonthlyTransactions: 80000,
     },
     nextStepAction: 'Teklif değerlendirmesi için online toplantı planlaması',
@@ -164,6 +168,12 @@ export default function App() {
               meetingNotes: Array.isArray(item.meetingNotes)
                 ? item.meetingNotes
                 : seedMatch?.meetingNotes ?? [],
+              pricing:
+                item.id === 'prop-2' &&
+                item.pricing?.discountType === 'fixed' &&
+                item.pricing?.discountValue === 2900
+                  ? { ...item.pricing, discountValue: 42000 }
+                  : item.pricing,
               selectedPackage:
                 item.selectedPackage === 'TEMEL' ? 'TEMEL' : 'PRO',
             };
